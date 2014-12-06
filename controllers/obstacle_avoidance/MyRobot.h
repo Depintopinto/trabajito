@@ -87,7 +87,8 @@ private:
     * @param
     * @return
     */
-    void control();
+    void control_ida();
+    void control_vuelta();
 
     enum Mode {
         FORWARD,

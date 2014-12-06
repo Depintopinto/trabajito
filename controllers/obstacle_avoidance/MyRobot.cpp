@@ -564,7 +564,9 @@ void MyRobot::atrasRecta(double angle){
             //para que deje de dar la vuelta sobre si mismo
             following =0;
         }
-    }else{
+    }else if(_compass_angle< angle-10){
+        _mode = TRUE_FAST_TURN_AROUND;
+    } else{
         _mode = TURN_AROUND;
     }
 }
@@ -661,7 +663,9 @@ void MyRobot::rescue_person(double angle)
             }
         }
     }
-    else{
+    else if(_compass_angle< angle-10){
+        _mode = TRUE_FAST_TURN_AROUND;
+    } else{
         _mode = TURN_AROUND;
     }
 
