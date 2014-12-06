@@ -98,8 +98,8 @@ void MyRobot::run()
             sum = sum + _dist_val[i];
         }
 
-        if(gps_initial != 1000.0){
-            if ((gps[2] > 8.2) && (num_personas < 2)){
+        if(gps_initial[2] != 1000.0){
+            if (((gps[2]- gps_initial[2])>17) && (num_personas < 2)){
 
                 if ((_compass_angle_green[0] == 1000.0) || (_compass_angle_green[1] == 1000.0))
                 {
@@ -165,19 +165,15 @@ void MyRobot::run()
             }
         }else{
             _mode = STOP;
+            media_gps();
         }
 
+        cout << "***gps initial 0 " << gps_initial[0] << endl;
+        cout << "***gps initial 1 " << gps_initial[1] << endl;
+        cout << "***gps initial 2 " << gps_initial[2] << endl;
 
-        cout<<"spee izda "<< _left_speed << endl;
-        cout<<"spee dcha "<< _right_speed << endl;
-        
-        cout<<"personas "<< persona << endl;
-        cout<<"num_personas "<< num_personas << endl;
+        cout << "***gps 2 " << gps[2] << endl;
 
-        cout<<"Angulo primera persona "<< _compass_angle_green[1] << endl;
-        cout<<"Angulo segunda persona "<< _compass_angle_green[0] << endl;
-
-        cout <<"Compass angle "<< _compass_angle << endl;
         // Set the mode
         mode();
 
@@ -320,7 +316,7 @@ void MyRobot::control_ida()
     }
 
     //If the robot detect a wall in front
-    if(((_dist_val[0]>DISTANCE || _dist_val[15]> DISTANCE) || (_dist_val[1]>3*DISTANCE || _dist_val[14]>3*DISTANCE)) && (_dist_val[7]<200 || _dist_val[8]<200))
+    if(((_dist_val[0]>DISTANCE || _dist_val[15]> DISTANCE) || (_dist_val[1]>3*DISTANCE || _dist_val[14]>3*DISTANCE)) && (_dist_val[7]<300 || _dist_val[8]<300))
     {
         //This if-else choose which side of the robot is near to the wall
         //and turn to that side
@@ -639,6 +635,7 @@ void MyRobot::media_gps()
 {
     const double *pos;
     pos = _my_gps->getValues();
+
     if(gps_initial[2] == 1000.0){
         if (contador < 50)
         {
@@ -656,6 +653,9 @@ void MyRobot::media_gps()
             gps[0] = x / 50;
             gps[1] = y / 50;
             gps[2] = z / 50;
+
+            cout << "gps initial 2 " << gps_initial[2] << endl;
+            cout << "gps 2 " << gps[2] << endl;
 
             x = 0;
             y = 0;
@@ -675,6 +675,8 @@ void MyRobot::media_gps()
             gps[0] = x / 50;
             gps[1] = y / 50;
             gps[2] = z / 50;
+
+
 
             x = 0;
             y = 0;
