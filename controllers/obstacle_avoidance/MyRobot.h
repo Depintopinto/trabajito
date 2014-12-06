@@ -1,8 +1,9 @@
 /**
  * @file    MyRobot.h
- * @brief   Controller for a robot to avoid obstacles.
+ * @brief   Controller for a robot to find people and coming back to the start.
  *
  * @author  Javier de Pinto Hernandez <100284151@alumnos.uc3m.es>
+ * @author  Samuel Hernandez Bermejo <100284298@alumnos.uc3m.es>
  * @date    2014-11
  */
 
@@ -34,6 +35,7 @@ private:
 
     int vuelta;
     double gps[3];
+    double gps_initial[3];
 
     Compass * _my_compass;
     GPS * _my_gps;
@@ -68,28 +70,32 @@ private:
     void mode();
 
     /**
-    * @brief Function that follow the angle we desired
+    * @brief Function that follow the desired angle
     * @param the desired angle
     * @return
     */
     void follow_compass(double angle);
 
     /**
-    * @brief Function that follow the angle we desired going back
-    * @param the desired angle
-    * @return
-    */
-    void follow_compass_back(double angle);
-
-    /**
-    * @brief Function with the logic of the controller
-    * that allow the robot to avoid an obstable
+    * @brief Function with the logic of the controller that allow the robot to avoid an obstable
     * @param
     * @return
     */
     void control_ida();
+
+    /**
+    * @brief Function with the logic of the controller that allow the robot to avoid an obstable coming back
+    * @param
+    * @return
+    */
     void control_vuelta();
 
+    /**
+    * @enum Mode
+    * @brief Enum with every mode uses by the robot.
+    * @param
+    * @return
+    */
     enum Mode {
         FORWARD,
         TURN_LEFT,
@@ -103,12 +109,7 @@ private:
         LINEA_RECTA_RIGHT,
         LINEA_RECTA_LEFT,
         LINEA_RECTA,
-        BRAKE,
-        FAST_TURN_AROUND,
-        TRUE_FAST_TURN_AROUND,
-        ATRAS_RECTA_RIGHT,
-        ATRAS_RECTA_LEFT,
-        ATRAS_RECTA
+        FAST_TURN_AROUND
     };
 
     Mode _mode;
@@ -139,13 +140,12 @@ public:
     /**
     * @brief Converting bearing vector from compass to angle (in degrees).
     * @param bearing vector of compass
-    * @return
+    * @return degrees
     */
-
     double convert_bearing_to_degrees(const double* in_vector);
 
     /**
-    * @brief Find and return the number of geen pixels.
+    * @brief Find and return the number of green pixels.
     *
     * The green pixels has been obtain by a comparation
     * of the rgb values of the functions imageGetGreen
@@ -153,12 +153,55 @@ public:
     * @return number of green pixels
     */
     int escaner(const char unsigned *image);
+
+    /**
+    * @brief After the robot finds the position of one person, it goes straight to the person position following the desired angle.
+    * @param the desired angle
+    * @return
+    */
     void lineaRecta(double angle);
+
+    /**
+    * @brief Function for rotational movement of the robot.
+    * The robot turns around itself to recognise the person.
+    * @param
+    * @return
+    */
     void dar_vuelta_completa();
+
+    /**
+    * @brief Function to recognise the angle where the people are placed, turning around itself.
+    *
+    * We use function escaner to recognise people.
+    * @param the image given by the camera
+    * @return number of green pixels
+    */
     void giro_escaner();
+
+    /**
+    * @brief Function to calculate the gps average.
+    *
+    * We use this function to have a more precise gps position.
+    * @param
+    * @return
+    */
     void media_gps();
+
+    /**
+    * @brief Function to see the person from the initial position, to go to the person and recognise it.
+    * After all the robot comes back to the initial position and do the same movements for the next person.
+    *
+    * @param Desired angle of the person´s situation
+    * @return
+    */
     void rescue_person(double angle);
 
+    /**
+    * @brief After the robot recognise one person, it goes straight to the initial position of the recognisement process.
+    * After this, in the initial position the robot look for the position of the other person.
+    * @param Desired angle of the initial position of the recognisement process.
+    * @return
+    */
     void atrasRecta(double angle);
 
 };
