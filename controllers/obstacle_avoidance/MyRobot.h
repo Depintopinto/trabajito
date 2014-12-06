@@ -142,6 +142,15 @@ public:
     */
 
     double convert_bearing_to_degrees(const double* in_vector);
+
+    /**
+    * @brief Find and return the number of geen pixels.
+    *
+    * The green pixels has been obtain by a comparation
+    * of the rgb values of the functions imageGetGreen
+    * @param the image given by the camera
+    * @return number of green pixels
+    */
     int escaner(const char unsigned *image);
     void lineaRecta(double angle);
     void dar_vuelta_completa();

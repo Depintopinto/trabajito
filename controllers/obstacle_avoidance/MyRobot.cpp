@@ -142,7 +142,7 @@ void MyRobot::run()
                 else
                 {
                     //Modificar control para las paredes a la vuelta
-                    control();
+                    control_ida();
                     mode();
 
                 }
@@ -159,7 +159,7 @@ void MyRobot::run()
                 }
                 else
                 {
-                    control();
+                    control_vuelta();
                     mode();
 
                 }
@@ -338,7 +338,7 @@ void MyRobot::get_distances()
 
 //////////////////////////////////////////////
 
-void MyRobot::control()
+void MyRobot::control_ida()
 {
     // Read the compass sensor and convert compass bearing vector to angle, in degrees
     const double *compass_val = _my_compass->getValues();
@@ -423,15 +423,93 @@ void MyRobot::control()
 
 //////////////////////////////////////////////
 
+void MyRobot::control_vuelta()
+{
+    // Read the compass sensor and convert compass bearing vector to angle, in degrees
+    const double *compass_val = _my_compass->getValues();
+    _compass_angle = convert_bearing_to_degrees(compass_val);
 
-/**
-* @brief Busca y devuelve la cantidad de pixeles verdes.
-*
-* los pixeles verdes lo hallamos a traves de la comparacion de los valores rgb
-* obtenidos a partir de las funciones tipo wb_camera_get
-* @param image es la imagen captada por la c?mara frontal
-* @return n?mero de pixeles verdes
-*/
+    //If the robot detect the end of a wall at the right side, and the compass point to rigth position
+    //the robot start turning rigth
+    if((((_dist_val[12]>400)||(_dist_val[11]>400)) && (_dist_val[0]==0) && (_dist_val[15]==0) && (_dist_val[13]==0) && (_dist_val[14]==0)&&(_dist_val[5]==0 || _dist_val[6]==0 || _dist_val[9]==0 || _dist_val[10] ==0)) && (_compass_angle>0 || _compass_angle<-90))
+    {
+        _mode = TURN_RIGHT_MORE;
+        cout << "End right wall" << endl;
+    }
+
+    //If the robot detect the end of a wall at the left side, and the compass point to rigth position
+    //the robot start turning left
+    if((((_dist_val[3]>400)||(_dist_val[4]>400))&& (_dist_val[2]==0)&& (_dist_val[0]==0) && (_dist_val[15]==0) && (_dist_val[1]==0) && (_dist_val[14]==0)&&(_dist_val[5]==0 || _dist_val[6]==0 || _dist_val[9]==0 || _dist_val[10] ==0)) && (_compass_angle>-179 || _compass_angle<90))
+    {
+        _mode = TURN_LEFT_MORE;
+        cout << "End left wall" << endl;
+    }
+
+    //If the robot detect a wall in front
+    if(((_dist_val[0]>DISTANCE || _dist_val[15]> DISTANCE) || (_dist_val[1]>3*DISTANCE || _dist_val[14]>3*DISTANCE)) && (_dist_val[7]<200 || _dist_val[8]<200))
+    {
+        //This if-else choose which side of the robot is near to the wall
+        //and turn to that side
+        if(_dist_val[3] == 0 && _dist_val[12] == 0)
+        {
+            if((_dist_val[2] > _dist_val[13]) || (_dist_val[1] > _dist_val[14]) || (_dist_val[0] > _dist_val[15]))
+            {
+                _mode = TURN_BACK_LEFT;
+                cout << "left wall" << endl;
+            }
+            else
+            {
+                _mode = TURN_BACK_RIGHT;
+                cout << "rigth wall" << endl;
+            }
+
+        }
+        else
+        {
+            if(_dist_val[3] > _dist_val[12])
+            {
+                _mode = TURN_BACK_LEFT;
+                cout << "left wall" << endl;
+            }
+            else
+            {
+                _mode = TURN_BACK_RIGHT;
+                cout << "right wall" << endl;
+            }
+        }
+    }
+    else
+    {
+        //Logic to follow a wall depending if it is too close or too far to the wall
+        if(((_dist_val[2]> 4*DISTANCE) || (_dist_val[13]< 3*DISTANCE  && _dist_val[13]!=0)) && (_dist_val[1]==0 || _dist_val[14]==0))
+        {
+            _mode = TURN_RIGHT;
+            cout << "turn right" << endl;
+        }
+        else
+        {
+            if((_dist_val[13]> 4*DISTANCE || (_dist_val[2]< 3*DISTANCE && _dist_val[2]!=0)) && (_dist_val[1]==0 || _dist_val[14]==0))
+            {
+                _mode = TURN_LEFT;
+                cout << "turn left" << endl;
+            }
+            else
+            {
+                //If the robot detects a wall behind it
+                if (_dist_val[7] > 7*DISTANCE || _dist_val[6] > 5*DISTANCE || _dist_val[9] > 5*DISTANCE || _dist_val[8] > 7*DISTANCE)
+                {
+                    _mode = FORWARD;
+                    cout << "forward" << endl;
+                }
+            }
+        }
+    }
+}
+
+//////////////////////////////////////////////
+
+
+
 int MyRobot::escaner(const char unsigned *image){
 
 
