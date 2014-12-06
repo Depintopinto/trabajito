@@ -24,34 +24,33 @@ class MyRobot : public DifferentialWheels {
 private:
 
     int _time_step;
-
+    ///Variable to count the number of person we have rescued
     int num_personas;
-
+    ///Variables to control the gps system
+    GPS * _my_gps;
     double x;
     double y;
     double z;
-
-    int contador;
-
-    int vuelta;
+    int contador;    
     double gps[3];
     double gps_initial[3];
-
+    ///Variables to control the compass system
     Compass * _my_compass;
-    GPS * _my_gps;
-    Camera * _forward_camera;
     double _compass_angle;
     double _compass_angle_green[2];
+    ///Variable to get the forward camera
+    Camera * _forward_camera;
 
     double _left_speed, _right_speed;
+    ///Variables to get inside and outside of the if else logic of the program
+    bool vuelta;
     int metres;
-    int back;
-    int entrar;
-    int persona;
+    back back;
+    bool entrar;
+    bool persona;
     int termina;
-
-    int following;
-
+    bool following;
+    ///Variables to control de distance sensors
     double _dist_val[NUM_DISTANCE_SENSOR];
     DistanceSensor * _distance_sensor[NUM_DISTANCE_SENSOR];
 

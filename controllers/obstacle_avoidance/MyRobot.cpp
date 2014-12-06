@@ -75,15 +75,15 @@ void MyRobot::run()
     contador = 0;
 
 
-    vuelta = 0;
+    vuelta = false;
     _compass_angle_green[0]= 1000.0;
     _compass_angle_green[1]= 1000.0;
     metres =0;
-    back = 0;
-    entrar = 0;
-    persona =0;
-    termina =0;
-    following = 0;
+    back = false;
+    entrar = false;
+    persona = false;
+    termina = 0;
+    following = false;
 
     gps_initial[2] = 1000.0;
     //Read the value of the encoders
@@ -99,7 +99,7 @@ void MyRobot::run()
         }
 
         if(gps_initial[2] != 1000.0){
-            if (((gps[2]- gps_initial[2])>9) && (num_personas < 2)){
+            if (((gps[2]- gps_initial[2])>17) && (num_personas < 2)){
 
                 if ((_compass_angle_green[0] == 1000.0) || (_compass_angle_green[1] == 1000.0))
                 {
@@ -110,7 +110,7 @@ void MyRobot::run()
                     gps[2] = 10;
                     _forward_camera->disable();
                     cout<<"desactivo camara"<< endl;
-                    if (persona == 0)
+                    if (persona == false)
                     {
                         rescue_person(_compass_angle_green[1]);
                     }
@@ -371,8 +371,10 @@ void MyRobot::control_ida()
                     if(_dist_val[0] > 900 || _dist_val[15] > 900){
                         if(_dist_val[0] > _dist_val[15]){
                             _mode = TURN_BACK_LEFT;
+                            cout << "atrasito izda" << endl;
                         }else{
                             _mode = TURN_BACK_RIGHT;
+                            cout << "atrasito dcha" << endl;
                         }
                     }else{
                         _mode = FORWARD;
@@ -515,18 +517,18 @@ void MyRobot::atrasRecta(double angle){
     /**comparamos la posicion historica con la que se tenia cuando se hizo
    la deteccion para no perder el rumbo.*/
 
-    if(((_compass_angle >= angle-1.25 && _compass_angle < angle + 1.25) && metres>0) || following ==1){
+    if(((_compass_angle >= angle-1.25 && _compass_angle < angle + 1.25) && metres>0) || following ==true){
         metres--;
         if(metres>0){
-            following = 1;
+            following = true;
             follow_compass(angle);
             cout << "angle atras" << angle << endl;
         }else{
-            back=0;
-            entrar =0;
-            persona ++;
+            back=false;
+            entrar = false;
+            persona =true;
             //para que deje de dar la vuelta sobre si mismo
-            following =0;
+            following =false;
         }
     }else{
         _mode = TURN_AROUND;
@@ -603,25 +605,25 @@ void MyRobot::rescue_person(double angle)
 
     if((_compass_angle >= angle-1.25 && _compass_angle < angle + 1.25)|| metres>0){
 
-        if ((entrar ==0)&&(vuelta == 1 ||_dist_val[0] > DISTANCE/2 || _dist_val[1] > DISTANCE/2 ||  _dist_val[14] > DISTANCE/2 || _dist_val[15] > DISTANCE/2)){
-            vuelta = 1;
+        if ((entrar ==false)&&(vuelta == true ||_dist_val[0] > DISTANCE/2 || _dist_val[1] > DISTANCE/2 ||  _dist_val[14] > DISTANCE/2 || _dist_val[15] > DISTANCE/2)){
+            vuelta = true;
 
             dar_vuelta_completa();
 
             if ((_compass_angle >= angle-5.25 && _compass_angle < angle)&&(termina > 20))
             {
                 num_personas = num_personas + 1;                
-                vuelta = 0;
-                back =1;
+                vuelta = false;
+                back =true;
                 //entrar es para que salga de dar la vuelta del anterior if
-                entrar = 1;
+                entrar = true;
                 //para que termine de dar la vuelta de este if
                 termina=0;
             }
         }
         else
         {
-            if(back== 0){
+            if(back== false){
                 cout <<"linea recta" << endl;
                 lineaRecta(angle);
             }else{
