@@ -9,8 +9,8 @@ WorldInfo {
   northDirection -1 0 -1
 }
 Viewpoint {
-  orientation 0.0173786 -0.683518 -0.729727 3.09
-  position -1.0211 21.919 -0.858554
+  orientation -0.571817 -0.545553 -0.612697 2.09666
+  position 1.36526 32.0563 4.446
 }
 Background {
   skyColor [
@@ -1311,6 +1311,27 @@ DEF LINE_P6 Solid {
   }
   locked TRUE
 }
+DEF FINISHLINE Solid {
+  translation 0 0.00125 8
+  rotation 0 1 0 1.5708
+  children [
+    Shape {
+      appearance Appearance {
+        material Material {
+          diffuseColor 1 1 0
+          specularColor 1 1 0
+        }
+      }
+      geometry Box {
+        size 0.05 0.0025 10
+      }
+    }
+  ]
+  boundingObject Box {
+    size 1e-06 1e-06 1e-06
+  }
+  locked TRUE
+}
 Solid {
   translation 0 1 9.9
   rotation 0 1 0 1.5708
@@ -1370,8 +1391,8 @@ DEF FLOOR Solid {
   locked TRUE
 }
 DEF PIONEER2 DifferentialWheels {
-  translation 0.55181 -3.40717e-14 -8.19433
-  rotation 0 1 0 3.1
+  translation -1.18818 0 -8.7776
+  rotation 0 1 0 5.87452
   children [
     Compass {
     }
@@ -1463,7 +1484,7 @@ DEF PIONEER2 DifferentialWheels {
       height 160
       spherical TRUE
       windowPosition 0.896774 0.779917
-      pixelSize 0
+      pixelSize 2
       antiAliasing TRUE
     }
     GPS {
@@ -1588,7 +1609,7 @@ DEF PIONEER2 DifferentialWheels {
     }
     Solid {
       translation -0.1603 0.0825 0
-      rotation 1 0 0 -468.803
+      rotation 1 0 0 5.27916
       children [
         DEF WHEEL Transform {
           rotation 0 0 1 1.57
@@ -1612,7 +1633,7 @@ DEF PIONEER2 DifferentialWheels {
     }
     Solid {
       translation 0.1603 0.0825 0
-      rotation 1 0 0 -451.395
+      rotation 1 0 0 2.64154
       children [
         USE WHEEL
       ]
@@ -1985,9 +2006,8 @@ DEF PIONEER2 DifferentialWheels {
       }
     ]
   }
-  controller "obstacle_avoidance"
   battery [
-    998830, 1e+06, 1e+06
+    998990, 1e+06, 1e+06
   ]
   cpuConsumption 0.2
   motorConsumption 0.1
