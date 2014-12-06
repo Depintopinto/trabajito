@@ -84,8 +84,6 @@ void MyRobot::run()
     persona =0;
     termina =0;
     following = 0;
-
-    gps_initial[2] = 1000.0;
     //Read the value of the encoders
     while (step(_time_step) != -1)
     {
@@ -97,77 +95,77 @@ void MyRobot::run()
         {
             sum = sum + _dist_val[i];
         }
-
-        if(gps_initial != 1000.0){
-            if ((gps[2] > 8.2) && (num_personas < 2)){
-
-                if ((_compass_angle_green[0] == 1000.0) || (_compass_angle_green[1] == 1000.0))
-                {
-                    giro_escaner();
-                }
-                else
-                {
-                    gps[2] = 10;
-                    _forward_camera->disable();
-                    cout<<"desactivo camara"<< endl;
-                    if (persona == 0)
-                    {
-                        rescue_person(_compass_angle_green[1]);
-                    }
-                    else
-                    {
-                        //hay que meter la logica para volver desde la primera persona
-                        // a gps_green e irse a por la siguiente
-                        rescue_person(_compass_angle_green[0]);
-                    }
+        /*Checks if there is any distance sensor detecting a wall
+          and if this wall is close enought (200) to change the mode
+          from follow_compass to control */
 
 
-                }
+        if ((gps[2] > 8.2) && (num_personas < 2)){
+
+            if ((_compass_angle_green[0] == 1000.0) || (_compass_angle_green[1] == 1000.0))
+            {
+                giro_escaner();
+
+                mode();
             }
             else
             {
-                if (num_personas == 2){
-                    cout<<"Vuelta" << endl;
-                    /*Checks if there is any distance sensor detecting a wall
-                      and if this wall is close enought (200) to change the mode
-                      from follow_compass to control */
-                    if (sum <= 200)
-                    {
-                        //Para que siga la direccion hacia abajo
-                        follow_compass(-135);
-                    }
-                    else
-                    {
-                        //Modificar control para las paredes a la vuelta
-                        control_ida();
-
-                    }
-                    // Set the motor speeds
+                gps[2] = 10;
+                _forward_camera->disable();
+                cout<<"desactivo camara"<< endl;
+                if (persona == 0)
+                {
+                    rescue_person(_compass_angle_green[1]);
+                    mode();
                 }
                 else
                 {
-                    media_gps();
-                    /*Checks if there is any distance sensor detecting a wall
-                      and if this wall is close enought (200) to change the mode
-                      from follow_compass to control */
-                    cout<<"if 3" << endl;
-                    if (sum <= 200)
-                    {
-                        follow_compass(45);
-                    }
-                    else
-                    {
-                        control_vuelta();
+                    //hay que meter la logica para volver desde la primera persona
+                    // a gps_green e irse a por la siguiente
+                    rescue_person(_compass_angle_green[0]);
+                    mode();
+                }
 
-                    }
+
+            }
+        }
+        else
+        {
+            if ((gps[2] > 8.2) && (num_personas == 2)){
+                cout<<"if 2" << endl;
+                if (sum <= 200)
+                {
+                    //Para que siga la direccion hacia abajo
+                    follow_compass(-135);
+                    mode();
+                }
+                else
+                {
+                    //Modificar control para las paredes a la vuelta
+                    control_ida();
+                    mode();
 
                 }
+                // Set the motor speeds
             }
-        }else{
-            _mode = STOP;
+            else
+            {
+                media_gps();
+                cout<<"if 3" << endl;
+                if (sum <= 200)
+                {
+                    follow_compass(45);
+                    mode();
+                }
+                else
+                {
+                    control_vuelta();
+                    mode();
+
+                }
+                // Set the motor speeds
+            }
         }
-
-
         cout<<"spee izda "<< _left_speed << endl;
         cout<<"spee dcha "<< _right_speed << endl;
         
@@ -177,11 +175,6 @@ void MyRobot::run()
         cout<<"Angulo primera persona "<< _compass_angle_green[1] << endl;
         cout<<"Angulo segunda persona "<< _compass_angle_green[0] << endl;
 
-        cout <<"Compass angle "<< _compass_angle << endl;
-        // Set the mode
-        mode();
-
-        // Set the motor speeds
         setSpeed(_left_speed, _right_speed);
     }
 }
@@ -223,6 +216,34 @@ void MyRobot::follow_compass(double angle)
     }
 }
 
+void MyRobot::follow_compass_back(double angle)
+{
+    // Read the sensors
+    const double *compass_val = _my_compass->getValues();
+
+    // Convert compass bearing vector to angle, in degrees
+    _compass_angle = convert_bearing_to_degrees(compass_val);
+
+    // Print sensor values to console
+    cout << "Following compass angle (degrees): " << _compass_angle << endl;
+
+    // Control the direction to the desired angle
+    if (_compass_angle < (angle - 1))
+    {
+        // Turn right
+        _mode = ATRAS_RECTA_LEFT;
+    }
+    else {
+        if (_compass_angle > (angle + 1)) {
+            // Turn left
+            _mode = ATRAS_RECTA_RIGHT;
+        }
+        else {
+            // Move forward
+            _mode = ATRAS_RECTA;
+        }
+    }
+}
 
 //////////////////////////////////////////////
 void MyRobot::mode()
@@ -276,11 +297,31 @@ void MyRobot::mode()
     case LINEA_RECTA:
         _left_speed = MAX_SPEED;
         _right_speed = MAX_SPEED;
-        break;    
+        break;
+    case BRAKE:
+        _left_speed = -10;
+        _right_speed =-10;
+        break;
     case FAST_TURN_AROUND:
         _left_speed = 20;
         _right_speed = -20;
-        break;    
+        break;
+    case TRUE_FAST_TURN_AROUND:
+        _left_speed = 40;
+        _right_speed = -40;
+        break;
+    case ATRAS_RECTA_RIGHT:
+        _left_speed = -MAX_SPEED;
+        _right_speed = -MAX_SPEED /1.25;
+        break;
+    case ATRAS_RECTA_LEFT:
+        _left_speed = -MAX_SPEED /1.25;
+        _right_speed = -MAX_SPEED;
+        break;
+    case ATRAS_RECTA:
+        _left_speed = -MAX_SPEED;
+        _right_speed = -MAX_SPEED;
+        break;
     default:
         break;
     }
@@ -523,7 +564,9 @@ void MyRobot::atrasRecta(double angle){
             //para que deje de dar la vuelta sobre si mismo
             following =0;
         }
-    }else{
+    }else if(_compass_angle< angle-10){
+        _mode = TRUE_FAST_TURN_AROUND;
+    } else{
         _mode = TURN_AROUND;
     }
 }
@@ -536,13 +579,11 @@ void MyRobot::atrasRecta(double angle){
 *
 */
 
-
 void MyRobot::dar_vuelta_completa()
 {
     _mode = FAST_TURN_AROUND;
     termina ++;
 }
-
 
 void MyRobot::giro_escaner()
 {
@@ -583,7 +624,6 @@ void MyRobot::giro_escaner()
     }
 
 }
-
 void MyRobot::rescue_person(double angle)
 {
 
@@ -617,19 +657,15 @@ void MyRobot::rescue_person(double angle)
         else
         {
             if(back== 0){
-                cout <<"linea recta" << endl;
                 lineaRecta(angle);
             }else{
-                cout <<"atras recta" << endl;
                 atrasRecta(angle-180);
             }
         }
     }
-    else if(_compass_angle< angle-20 || _compass_angle> angle +10){
-        cout <<"rapido" << endl;
-        _mode = FAST_TURN_AROUND;
+    else if(_compass_angle< angle-10){
+        _mode = TRUE_FAST_TURN_AROUND;
     } else{
-        cout <<"Despacio" << endl;
         _mode = TURN_AROUND;
     }
 
@@ -638,52 +674,26 @@ void MyRobot::rescue_person(double angle)
 void MyRobot::media_gps()
 {
     const double *pos;
+    
+
     pos = _my_gps->getValues();
-    if(gps_initial[2] == 1000.0){
-        if (contador < 50)
-        {
-            x += pos[0];
-            y += pos[1];
-            z += pos[2];
-            contador++;
-        }
-        if (contador == 50)
-        {
-            gps_initial[0] = x / 50;
-            gps_initial[1] = y / 50;
-            gps_initial[2] = z / 50;
-
-            gps[0] = x / 50;
-            gps[1] = y / 50;
-            gps[2] = z / 50;
-
-            x = 0;
-            y = 0;
-            z = 0;
-            contador = 0;
-        }
-    }else{
-        if (contador < 50)
-        {
-            x += pos[0];
-            y += pos[1];
-            z += pos[2];
-            contador++;
-        }
-        if (contador == 50)
-        {
-            gps[0] = x / 50;
-            gps[1] = y / 50;
-            gps[2] = z / 50;
-
-            x = 0;
-            y = 0;
-            z = 0;
-            contador = 0;
-        }
+    if (contador < 50)
+    {
+        x += pos[0];
+        y += pos[1];
+        z += pos[2];
+        contador++;
     }
+    if (contador == 50)
+    {
+        gps[0] = x / 50;
+        gps[1] = y / 50;
+        gps[2] = z / 50;
 
-
+        x = 0;
+        y = 0;
+        z = 0;
+        contador = 0;
+    }
 }
 
-	
