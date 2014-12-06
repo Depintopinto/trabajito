@@ -25,13 +25,13 @@ private:
 
     int _time_step;
     ///Variable to count the number of person we have rescued
-    int num_personas;
+    int num_person;
     ///Variables to control the gps system
     GPS * _my_gps;
     double x;
     double y;
     double z;
-    int contador;    
+    int counter;
     double gps[3];
     double gps_initial[3];
     ///Variables to control the compass system
@@ -43,12 +43,12 @@ private:
 
     double _left_speed, _right_speed;
     ///Variables to get inside and outside of the if else logic of the program
-    bool vuelta;
+    bool turn;
     int metres;
     back back;
-    bool entrar;
-    bool persona;
-    int termina;
+    bool inside;
+    bool person;
+    int end;
     bool following;
     ///Variables to control de distance sensors
     double _dist_val[NUM_DISTANCE_SENSOR];
@@ -80,14 +80,14 @@ private:
     * @param
     * @return
     */
-    void control_ida();
+    void control_up();
 
     /**
     * @brief Function with the logic of the controller that allow the robot to avoid an obstable coming back
     * @param
     * @return
     */
-    void control_vuelta();
+    void control_down();
 
     /**
     * @enum Mode
@@ -105,9 +105,9 @@ private:
         TURN_RIGHT_MORE,
         TURN_AROUND,
         STOP,
-        LINEA_RECTA_RIGHT,
-        LINEA_RECTA_LEFT,
-        LINEA_RECTA,
+        GO_STRAIGHT_RIGHT,
+        GO_STRAIGHT_LEFT,
+        GO_STRAIGHT,
         FAST_TURN_AROUND
     };
 
@@ -151,14 +151,14 @@ public:
     * @param the image given by the camera
     * @return number of green pixels
     */
-    int escaner(const char unsigned *image);
+    int scaner(const char unsigned *image);
 
     /**
     * @brief After the robot finds the position of one person, it goes straight to the person position following the desired angle.
     * @param the desired angle
     * @return
     */
-    void lineaRecta(double angle);
+    void go_straight(double angle);
 
     /**
     * @brief Function for rotational movement of the robot.
@@ -166,16 +166,16 @@ public:
     * @param
     * @return
     */
-    void dar_vuelta_completa();
+    void turn_around_complete();
 
     /**
     * @brief Function to recognise the angle where the people are placed, turning around itself.
     *
-    * We use function escaner to recognise people.
+    * We use function scaner to recognise people.
     * @param the image given by the camera
     * @return number of green pixels
     */
-    void giro_escaner();
+    void scaner_turn_around();
 
     /**
     * @brief Function to calculate the gps average.
@@ -184,7 +184,7 @@ public:
     * @param
     * @return
     */
-    void media_gps();
+    void gps_average();
 
     /**
     * @brief Function to see the person from the initial position, to go to the person and recognise it.
@@ -201,7 +201,5 @@ public:
     * @param Desired angle of the initial position of the recognisement process.
     * @return
     */
-    void atrasRecta(double angle);
-
+    void go_back_straight(double angle);
 };
-
