@@ -102,7 +102,7 @@ void MyRobot::run()
                 }
                 else
                 {
-                    gps[2] = gps_initial[2] + 18;
+                    gps[2] = 10;
                     _forward_camera->disable();
                     if (person == false)
                     {
