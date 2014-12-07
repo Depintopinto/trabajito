@@ -439,7 +439,7 @@ void MyRobot::control_down()
             else
             {
                 //If the robot detects a wall behind it
-                if (_dist_val[7] > 7*DISTANCE || _dist_val[6] > 5*DISTANCE || _dist_val[9] > 5*DISTANCE || _dist_val[8] > 7*DISTANCE)
+                if (_dist_val[7] > 9*DISTANCE || _dist_val[6] > 7*DISTANCE || _dist_val[9] > 7*DISTANCE || _dist_val[8] > 9*DISTANCE)
                 {
                     if(_dist_val[0] > 900 || _dist_val[15] > 900){
                         if(_dist_val[0] > _dist_val[15]){
