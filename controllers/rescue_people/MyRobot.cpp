@@ -1,22 +1,21 @@
 /**
  * @file    MyRobot.cpp
- * @brief   Controller for a robot to avoid obstacles.
+ * @brief   Controller for a robot to find people and coming back to the start.
  *
  * @author  Javier de Pinto Hernandez <100284151@alumnos.uc3m.es>
- * @date    2014-11
+ * @author  Samuel Hernandez Bermejo <100284298@alumnos.uc3m.es>
+ * @date    2014-12-07
  */
 
 #include "MyRobot.h"
 
 //////////////////////////////////////////////
-
 MyRobot::MyRobot() : DifferentialWheels()
 {
     _time_step = 64;
 
     _left_speed = 0;
     _right_speed = 0;
-
 
     // Get and enable the compass device
     _my_compass = getCompass("compass");
@@ -54,12 +53,13 @@ MyRobot::MyRobot() : DifferentialWheels()
 //////////////////////////////////////////////
 MyRobot::~MyRobot()
 {
+    //Disable compass device and gps device
     _my_compass->disable();
     _my_gps->disable();
+    //Disable distance sensors
     for (int i=0; i<NUM_DISTANCE_SENSOR; i++) {
         _distance_sensor[i]->disable();
     }
-
 }
 
 //////////////////////////////////////////////
@@ -67,24 +67,25 @@ void MyRobot::run()
 {
     double sum;
     
-
-    num_person = 0;
+    gps_initial[2] = 1000.0;
     x = 0;
     y = 0;
     z = 0;
     counter = 0;
 
-    turn = false;
+
     _compass_angle_green[0]= 1000.0;
     _compass_angle_green[1]= 1000.0;
+
+    end = 0;
     metres =0;
+    num_person = 0;
+    turn = false;
     back = false;
     inside = false;
     person = false;
-    end = 0;
     following = false;
 
-    gps_initial[2] = 1000.0;
     while (step(_time_step) != -1)
     {
         get_distances();
@@ -93,9 +94,10 @@ void MyRobot::run()
         {
             sum = sum + _dist_val[i];
         }
+        //First we calculate initial gps position, the robot wont start until we know it
         if(gps_initial[2] != 1000.0){
             if (((gps[2]- gps_initial[2])>17) && (num_person < 2)){
-
+                //Start the identification
                 if ((_compass_angle_green[0] == 1000.0) || (_compass_angle_green[1] == 1000.0))
                 {
                     scaner_turn_around();
@@ -116,42 +118,33 @@ void MyRobot::run()
             }
             else
             {
+                //Start the going down
                 if (num_person == 2){
-                    cout<<"navegacion vuelta" << endl;
                     /*Checks if there is any distance sensor detecting a wall
                       and if this wall is close enought (200) to change the mode
                       from follow_compass to control */
                     if (sum <= 200)
                     {
-                        //Para que siga la direccion hacia abajo
+                        //To follow down direction of the map
                         follow_compass_down(-135);
                     }
                     else
                     {
-                        //Modificar control para las paredes a la turn
                         control_down();
-
                     }
-                    // Set the motor speeds
                 }
                 else
                 {
+                    //Start the going up
                     gps_average();
-                    /*Checks if there is any distance sensor detecting a wall
-                      and if this wall is close enought (200) to change the mode
-                      from follow_compass to control */
-                    cout<<" navegacion ida" << endl;
                     if (sum <= 200)
                     {
-                        cout << "sigo brujula" << endl;
                         follow_compass(45);
                     }
                     else
                     {
                         control_up();
-
                     }
-
                 }
             }
         }else{
@@ -161,24 +154,15 @@ void MyRobot::run()
 
             // Convert compass bearing vector to angle, in degrees
             _compass_angle = convert_bearing_to_degrees(compass_val);
+            //We placed the robot in the correct direction.
             if(_compass_angle >= 35 && _compass_angle < 55){
                 _mode = STOP;
-                cout << "Paro" <<endl;
             }else{
                 _mode = FAST_TURN_AROUND;
-                cout << "giro" <<endl;
             }
         }
-
-        cout << "***gps initial 0 " << gps_initial[0] << endl;
-        cout << "***gps initial 1 " << gps_initial[1] << endl;
-        cout << "***gps initial 2 " << gps_initial[2] << endl;
-
-        cout << "***gps 2 " << gps[2] << endl;
-
         // Set the mode
         mode();
-
         // Set the motor speeds
         setSpeed(_left_speed, _right_speed);
     }
@@ -195,14 +179,8 @@ double MyRobot::convert_bearing_to_degrees(const double* in_vector)
 //////////////////////////////////////////////
 void MyRobot::follow_compass(double angle)
 {
-    // Read the sensors
     const double *compass_val = _my_compass->getValues();
-
-    // Convert compass bearing vector to angle, in degrees
     _compass_angle = convert_bearing_to_degrees(compass_val);
-
-    // Print sensor values to console
-    cout << "Following compass angle (degrees): " << _compass_angle << endl;
 
     // Control the direction to the desired angle
     if (_compass_angle < (angle - 1))
@@ -225,28 +203,18 @@ void MyRobot::follow_compass(double angle)
 //////////////////////////////////////////////
 void MyRobot::follow_compass_down(double angle)
 {
-    // Read the sensors
     const double *compass_val = _my_compass->getValues();
-
-    // Convert compass bearing vector to angle, in degrees
     _compass_angle = convert_bearing_to_degrees(compass_val);
 
-    // Print sensor values to console
-    cout << "Following compass angle (degrees): " << _compass_angle << endl;
-
-    // Control the direction to the desired angle
     if (_compass_angle < (angle - 1) || _compass_angle >90)
     {
-        // Turn right
         _mode = GO_STRAIGHT_RIGHT;
     }
     else {
         if (_compass_angle > (angle + 1) ) {
-            // Turn left
             _mode = GO_STRAIGHT_LEFT;
         }
         else {
-            // Move forward
             _mode = GO_STRAIGHT;
         }
     }
@@ -324,7 +292,6 @@ void MyRobot::get_distances()
 }
 
 //////////////////////////////////////////////
-
 void MyRobot::control_up()
 {
     // Read the compass sensor and convert compass bearing vector to angle, in degrees
@@ -336,7 +303,6 @@ void MyRobot::control_up()
     if((((_dist_val[12]>400)||(_dist_val[11]>400)) && (_dist_val[0]==0) && (_dist_val[15]==0) && (_dist_val[13]==0) && (_dist_val[14]==0)&&(_dist_val[5]==0 || _dist_val[6]==0 || _dist_val[9]==0 || _dist_val[10] ==0)) && (_compass_angle>-179 && _compass_angle<90))
     {
         _mode = TURN_RIGHT_MORE;
-        cout << "End right wall" << endl;
     }
 
     //If the robot detect the end of a wall at the left side, and the compass point to rigth position
@@ -344,7 +310,6 @@ void MyRobot::control_up()
     if((((_dist_val[3]>400)||(_dist_val[4]>400))&& (_dist_val[2]==0)&& (_dist_val[0]==0) && (_dist_val[15]==0) && (_dist_val[1]==0) && (_dist_val[14]==0)&&(_dist_val[5]==0 || _dist_val[6]==0 || _dist_val[9]==0 || _dist_val[10] ==0)) && (_compass_angle>0 || _compass_angle<-90))
     {
         _mode = TURN_LEFT_MORE;
-        cout << "End left wall" << endl;
     }
 
     //If the robot detect a wall in front
@@ -357,12 +322,10 @@ void MyRobot::control_up()
             if((_dist_val[2] > _dist_val[13]) || (_dist_val[1] > _dist_val[14]) || (_dist_val[0] > _dist_val[15]))
             {
                 _mode = TURN_BACK_LEFT;
-                cout << "left wall" << endl;
             }
             else
             {
                 _mode = TURN_BACK_RIGHT;
-                cout << "rigth wall" << endl;
             }
 
         }
@@ -371,12 +334,10 @@ void MyRobot::control_up()
             if(_dist_val[3] > _dist_val[12])
             {
                 _mode = TURN_BACK_LEFT;
-                cout << "left wall" << endl;
             }
             else
             {
                 _mode = TURN_BACK_RIGHT;
-                cout << "right wall" << endl;
             }
         }
     }
@@ -386,14 +347,12 @@ void MyRobot::control_up()
         if(((_dist_val[2]> 4*DISTANCE) || (_dist_val[13]< 3*DISTANCE  && _dist_val[13]!=0)) && (_dist_val[1]==0 || _dist_val[14]==0))
         {
             _mode = TURN_RIGHT;
-            cout << "turn right" << endl;
         }
         else
         {
             if((_dist_val[13]> 4*DISTANCE || (_dist_val[2]< 3*DISTANCE && _dist_val[2]!=0)) && (_dist_val[1]==0 || _dist_val[14]==0))
             {
                 _mode = TURN_LEFT;
-                cout << "turn left" << endl;
             }
             else
             {
@@ -403,16 +362,12 @@ void MyRobot::control_up()
                     if(_dist_val[0] > 900 || _dist_val[15] > 900){
                         if(_dist_val[0] > _dist_val[15]){
                             _mode = TURN_BACK_LEFT;
-                            cout << "atrasito izda" << endl;
                         }else{
                             _mode = TURN_BACK_RIGHT;
-                            cout << "atrasito dcha" << endl;
                         }
                     }else{
                         _mode = FORWARD;
-                        cout << "forward" << endl;
                     }
-
                 }
             }
         }
@@ -431,7 +386,6 @@ void MyRobot::control_down()
     if((((_dist_val[12]>400)||(_dist_val[11]>400)) && (_dist_val[0]==0) && (_dist_val[15]==0) && (_dist_val[13]==0) && (_dist_val[14]==0)&&(_dist_val[5]==0 || _dist_val[6]==0 || _dist_val[9]==0 || _dist_val[10] ==0)) && (_compass_angle>0 || _compass_angle<-90))
     {
         _mode = TURN_RIGHT_MORE;
-        cout << "End right wall" << endl;
     }
 
     //If the robot detect the end of a wall at the left side, and the compass point to rigth position
@@ -439,7 +393,6 @@ void MyRobot::control_down()
     if((((_dist_val[3]>400)||(_dist_val[4]>400))&& (_dist_val[2]==0)&& (_dist_val[0]==0) && (_dist_val[15]==0) && (_dist_val[1]==0) && (_dist_val[14]==0)&&(_dist_val[5]==0 || _dist_val[6]==0 || _dist_val[9]==0 || _dist_val[10] ==0)) && (_compass_angle>-179 && _compass_angle<90))
     {
         _mode = TURN_LEFT_MORE;
-        cout << "End left wall" << endl;
     }
 
     //If the robot detect a wall in front
@@ -452,26 +405,21 @@ void MyRobot::control_down()
             if((_dist_val[2] > _dist_val[13]) || (_dist_val[1] > _dist_val[14]) || (_dist_val[0] > _dist_val[15]))
             {
                 _mode = TURN_BACK_LEFT;
-                cout << "left wall" << endl;
             }
             else
             {
                 _mode = TURN_BACK_RIGHT;
-                cout << "rigth wall" << endl;
             }
-
         }
         else
         {
             if(_dist_val[3] > _dist_val[12])
             {
                 _mode = TURN_BACK_LEFT;
-                cout << "left wall" << endl;
             }
             else
             {
                 _mode = TURN_BACK_RIGHT;
-                cout << "right wall" << endl;
             }
         }
     }
@@ -481,14 +429,12 @@ void MyRobot::control_down()
         if(((_dist_val[2]> 4*DISTANCE) || (_dist_val[13]< 3*DISTANCE  && _dist_val[13]!=0)) && (_dist_val[1]==0 || _dist_val[14]==0))
         {
             _mode = TURN_RIGHT;
-            cout << "turn right" << endl;
         }
         else
         {
             if((_dist_val[13]> 4*DISTANCE || (_dist_val[2]< 3*DISTANCE && _dist_val[2]!=0)) && (_dist_val[1]==0 || _dist_val[14]==0))
             {
                 _mode = TURN_LEFT;
-                cout << "turn left" << endl;
             }
             else
             {
@@ -498,16 +444,12 @@ void MyRobot::control_down()
                     if(_dist_val[0] > 900 || _dist_val[15] > 900){
                         if(_dist_val[0] > _dist_val[15]){
                             _mode = TURN_BACK_LEFT;
-                            cout << "atrasito izda" << endl;
                         }else{
                             _mode = TURN_BACK_RIGHT;
-                            cout << "atrasito dcha" << endl;
                         }
                     }else{
                         _mode = FORWARD;
-                        cout << "forward" << endl;
                     }
-
                 }
             }
         }
@@ -516,6 +458,8 @@ void MyRobot::control_down()
 
 //////////////////////////////////////////////
 int MyRobot::scaner(const char unsigned *image){
+    /*We use the forward camera to have Red,Green and Blue and
+     we compare the three colours if green is bigger we add one to count*/
     int r ,g ,b ;
     int x ,y ;
     int count = 0;
@@ -534,8 +478,8 @@ int MyRobot::scaner(const char unsigned *image){
 
 //////////////////////////////////////////////
 void MyRobot::go_straight(double angle){
-    /**comparamos la posicion historica con la que se tenia cuando se hizo
-   la deteccion para no perder el rumbo.*/
+    /*Metres is used to knwo the distance from scaner position to the rescued person
+    we are going to use this valuable in go_back_straight too.*/
     metres++;
 
     follow_compass(angle);
@@ -543,24 +487,24 @@ void MyRobot::go_straight(double angle){
 
 //////////////////////////////////////////////
 void MyRobot::go_back_straight(double angle){
-    /**comparamos la posicion historica con la que se tenia cuando se hizo
-   la deteccion para no perder el rumbo.*/
-    cout << "angulo " << angle <<endl;
+    /*If the robot angle is between the range and our distance is bigger than 0
+    the robot will move to the initial scaner position, When the compass angle isnt in the range,
+    the robot will move because metres is bigger than 0 and following its true.*/
     if(((_compass_angle >= angle-1.25 && _compass_angle < angle + 1.25) && metres>0) || following ==true){
         metres--;
         if(metres>0){
             following = true;
             follow_compass(angle);
-            cout << "angle atras" << angle << endl;
         }else{
+            //The robot doesnt need to move back.
             back=false;
             inside = false;
+            //When the robot is in scaner position person is true
             person =true;
-            //para que deje de dar la turn sobre si mismo
+            //To not turn around itself(robot)
             following =false;
         }
     }else{
-        cout << "giro porque quiero " <<endl;
         _mode = TURN_AROUND;
     }
 }
@@ -581,14 +525,13 @@ void MyRobot::scaner_turn_around()
     // Get current image from forward camera
     const unsigned char *image = _forward_camera->getImage();
 
-    // Read the sensors
     const double *compass_val = _my_compass->getValues();
-
-    // Convert compass bearing vector to angle, in degrees
     _compass_angle = convert_bearing_to_degrees(compass_val);
-
+    //If the robot detect something green.
     if (scaner(image) > 20)
     {
+        /*Finded angle person, if it is the first person we will safe this angle in _compass_angle_green[1]
+        if its the second it will be saved in _compass_angle_green[0]*/
         _compass_angle_green[0] = _compass_angle;
     }
     else
@@ -612,57 +555,41 @@ void MyRobot::scaner_turn_around()
 //////////////////////////////////////////////
 void MyRobot::rescue_person(double angle)
 {
-    // Read the sensors
     const double *compass_val = _my_compass->getValues();
-
-    // Convert compass bearing vector to angle, in degrees
     _compass_angle = convert_bearing_to_degrees(compass_val);
 
     if((_compass_angle >= angle-1.25 && _compass_angle < angle + 1.25)|| metres >0 ){
-
-        cout << "estoy en el angulo" << endl;
         if ((inside ==false)&&(turn == true ||_dist_val[0] > DISTANCE/2 || _dist_val[1] > DISTANCE/2 ||  _dist_val[14] > DISTANCE/2 || _dist_val[15] > DISTANCE/2)){
             turn = true;
-            cout << "Dar vuelta completa" << endl;
             turn_around_complete();
-
             if ((_compass_angle >= angle-5.25 && _compass_angle < angle)&&(end > 20))
             {
-                cout << "vuelta completada" <<endl;
                 num_person = num_person + 1;
                 turn = false;
                 back =true;
-                //inside es para que salga de dar la turn del anterior if
+                //To exit of this if.
                 inside = true;
-                //para que termine de dar la turn de este if
+                //Until end is 0 the robot is turned around itself.
                 end=0;
-            }else{
-                cout << "elseelse" <<endl;
             }
         }
         else
         {
             if(back== false){
-                cout <<"linea recta" << endl;
                 go_straight(angle);
             }else{
-                cout <<"atras recta" << endl;
+                /*if angle is negative and you try to subtract 180 the result of this is an angle that doesnt exist.*/
                 if(angle >=0.0){
-                    cout <<"positivo" << endl;
                     go_back_straight(angle-180);
                 }else{
-                    cout <<"negativo" << endl;
                     go_back_straight(angle+180);
                 }
-
             }
         }
     }
     else if(_compass_angle< angle-20 || _compass_angle> angle +10){
-        cout <<"rapido" << endl;
         _mode = FAST_TURN_AROUND;
     } else{
-        cout <<"Despacio" << endl;
         _mode = TURN_AROUND;
     }
 }
@@ -670,6 +597,8 @@ void MyRobot::rescue_person(double angle)
 //////////////////////////////////////////////
 void MyRobot::gps_average()
 {
+    /*we calculate the gps position with an average of 50 gps position because if we use only one position gps it cant be right
+    Also we calculate initial gps position to know when the robot is up in the map.*/
     const double *pos;
     pos = _my_gps->getValues();
 
@@ -689,9 +618,6 @@ void MyRobot::gps_average()
             gps[0] = x / 50;
             gps[1] = y / 50;
             gps[2] = z / 50;
-
-            cout << "gps initial 2 " << gps_initial[2] << endl;
-            cout << "gps 2 " << gps[2] << endl;
 
             x = 0;
             y = 0;

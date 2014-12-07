@@ -4,7 +4,7 @@
  *
  * @author  Javier de Pinto Hernandez <100284151@alumnos.uc3m.es>
  * @author  Samuel Hernandez Bermejo <100284298@alumnos.uc3m.es>
- * @date    2014-11
+ * @date    2014-12-07
  */
 
 
@@ -40,7 +40,7 @@ private:
     double _compass_angle_green[2];
     ///Variable to get the forward camera
     Camera * _forward_camera;
-
+    //Variables to control the speed
     double _left_speed, _right_speed;
     ///Variables to get inside and outside of the if else logic of the program
     bool turn;
@@ -80,7 +80,7 @@ private:
     * @param the desired angle
     * @return
     */
-    void follow_compass(double angle);
+    void follow_compass_down(double angle);
 
     /**
     * @brief Function with the logic of the controller that allow the robot to avoid an obstable
@@ -179,8 +179,8 @@ public:
     * @brief Function to recognise the angle where the people are placed, turning around itself.
     *
     * We use function scaner to recognise people.
-    * @param the image given by the camera
-    * @return number of green pixels
+    * @param
+    * @return
     */
     void scaner_turn_around();
 
